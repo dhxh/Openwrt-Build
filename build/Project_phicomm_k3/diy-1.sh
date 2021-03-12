@@ -9,4 +9,4 @@
 # 软件包地址：https://github.com/281677160/openwrt-package
 
 # 添加AutoUpdate APP
-git clone https://github.com/Hyy2001X/luci-app-autoupdate.git package/luci-app-autoupdate
+
