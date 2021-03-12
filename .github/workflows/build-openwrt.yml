@@ -95,9 +95,9 @@ jobs:
     
     - name: 调整脚本文件
       run: |
-        git clone https://github.com/dhxh/OpenwrtAutoupda "${GITHUB_WORKSPACE}/build/Autoupda"
+        git clone https://github.com/dhxh/OpenwrtAutoupdate "${GITHUB_WORKSPACE}/build/Autoupdate"
         cp -Rf `find ./ -maxdepth 1 -type d ! -path './openwrt' ! -path './'` openwrt
-        cp -Rf "${GITHUB_WORKSPACE}/build/Autoupda"/*.sh "${PATH1}"
+        cp -Rf "${GITHUB_WORKSPACE}/build/Autoupdate"/*.sh "${PATH1}"
         chmod -R +x "${PATH1}"
         if [[ "${{ github.event.inputs.ssh }}" == 'ssh' ]]; then
           echo "SSHYC=true" >> $GITHUB_ENV
@@ -119,6 +119,7 @@ jobs:
         if [ -n "$(ls -A "${PATH1}/patches" 2>/dev/null)" ]; then
           find "${PATH1}/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 --forward --no-backup-if-mismatch"
         fi
+        git clone https://github.com/281677160/luci-app-autoupdate package/luci-app-autoupdate
         git clone https://github.com/openwrt-dev/po2lmo.git
         pushd po2lmo
         make && sudo make install
