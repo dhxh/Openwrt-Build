@@ -106,6 +106,8 @@ jobs:
     - name: 加载源,patch补丁和自定义设置
       run: |
         cd openwrt
+        ./scripts/feeds clean
+        ./scripts/feeds update -a && ./scripts/feeds install -a
         /bin/bash "${PATH1}/$DIY_P1_SH"
         /bin/bash "${PATH1}/$DIY_P2_SH"
         if [ -n "$(ls -A "${PATH1}/files" 2>/dev/null)" ]; then
@@ -122,8 +124,6 @@ jobs:
         pushd po2lmo
         make && sudo make install
         popd
-        ./scripts/feeds clean
-        ./scripts/feeds update -a && ./scripts/feeds install -a
         [ -e "$PATH1/$CONFIG_FILE" ] && mv "$PATH1/$CONFIG_FILE" .config
         if [[ "${REGULAR_UPDATE}" == "true" ]]; then
           echo "Compile_Date_Day=$(date +%Y%m%d)" >> $GITHUB_WORKSPACE/Openwrt.info
