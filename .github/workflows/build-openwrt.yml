@@ -5,7 +5,7 @@
 # Copyright (C) 2019 P3TERX <https://p3terx.com>
 # <https://github.com/P3TERX/Actions-OpenWrt.git>
 #
-name: Build Openwrt
+name: 编译OpenWrt固件
 on:
   workflow_dispatch:
     inputs:
@@ -23,6 +23,9 @@ env:
   LIENOL: https://github.com/Lienol/openwrt
   PROJECT: https://github.com/immortalwrt/immortalwrt
   GITURL: https://github.com/${{github.repository}}
+  Author: ${{github.actor}}
+  Run_number: ${{github.run_number}}
+  Run_workflow: ${{github.workflow}}
   TZ: Asia/Shanghai
 
 jobs:
@@ -36,6 +39,18 @@ jobs:
       matrix:
         target: [Project_x86_64,Project_phicomm_k3]
 
+     # [Lede_x86_64,Lede_gl_mt300n_v2,Lede_nanopi_r2s,Lede_nanopi_r4s,Lede_newifi_d2,Lede_p2w_r619ac_128m,Lede_phicomm_k2p]
+     # [Lede_phicomm_n1,Lede_redmi_ac2100,Lede_wankeyun,Lede_wndr3800,Lede_wndr4300_v1,Lede_xiaomi_r3pro,Lede_xiaoyu_c5,Lede_Raspberry_Pi4]
+     
+     # [Lienol_phicomm_k2p,Lienol_phicomm_k3,Lienol_x86_64]
+
+     # [Project_x86_64,Project_nanopi_r2s,Project_nanopi_r4s,Project_newifi_d2,Project_phicomm_k3,Project_phicomm_n1,Project_xiaomi_ac2100,Project_xiaomi_mir3g,Project_xiaoyu_c5] 
+
+     # 各个源码都直接打入了常用插件了，不需要自己再拉取插件，除非我的插件包跟源码自带的都没有，你就自己添加吧，说明的《各种命令的简单介绍》有教程。
+     # 选择【Lede_phicomm_n1或Project_phicomm_n1】的机型文件夹编译的话，会自动编译出（ N1、微加云、贝壳云、我家云、S9xxx ）固件。
+     # [Lede_opewrt,Lienol_opewrt,Project_opewrt] 分别为三个源码的公共文件,你没找到你要编译的机型就使用各源码的公共文件夹来编译就可以了。
+
+
     steps:
     - name: 准备结束
       uses: actions/checkout@v2
@@ -44,9 +59,6 @@ jobs:
       run: |
         source "${GITHUB_WORKSPACE}/build/${{matrix.target}}/settings.ini"
         echo "Modelfile=${{matrix.target}}" >> $GITHUB_ENV
-        echo "Author=${{github.actor}}" >> $GITHUB_ENV
-        echo "Run_number=${{github.run_number}}" >> $GITHUB_ENV
-        echo "Run_workflow=${{github.workflow}}" >> $GITHUB_ENV
         echo "REPO_URL=${REPO_URL}" >> $GITHUB_ENV
         echo "REPO_BRANCH=${REPO_BRANCH}" >> $GITHUB_ENV
         echo "CONFIG_FILE=${CONFIG_FILE}" >> $GITHUB_ENV
@@ -63,13 +75,14 @@ jobs:
         echo "Updete_firmware=${Updete_firmware}" >> $GITHUB_ENV
         echo "Extension=${Extension}" >> $GITHUB_ENV
 
-    - name: 电报机器人信息通知
-      run: |
-        if [[ "${SERVERCHAN_SCKEY}" == "true" ]]; then
-          curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=🎉 主人：
-                  您正在使用【${{github.repository}}】仓库的【${{matrix.target}}】文件夹编译固件中(#${{github.run_number}}),请耐心等待..... 😋" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
-        fi
-    
+    - name: 微信通知
+      uses: emon100/Action-Serverchan@v2
+      if: env.SERVERCHAN_SCKEY == 'true'
+      with:
+        SCKEY: ${{ secrets.SCKEY }}
+        text: 主人${{matrix.target}}编译开始啦
+        desp: 主人您要编译的[${{matrix.target}}]固件正在努力耕耘中(#${{github.run_number}}),请耐心等待......
+     
     - name: 设置编译环境
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -93,23 +106,34 @@ jobs:
         echo "PATH1=${GITHUB_WORKSPACE}/openwrt/build/${{matrix.target}}" >> $GITHUB_ENV
         echo "artifact=${GITHUB_WORKSPACE}/openwrt/bin/Firmware" >> $GITHUB_ENV
     
-    - name: 加载脚本
+    - name: 加载脚本文件
       run: |
         git clone https://github.com/dhxh/OpenwrtAutoupdate "${GITHUB_WORKSPACE}/build/Autoupdate"
         cp -Rf `find ./ -maxdepth 1 -type d ! -path './openwrt' ! -path './'` openwrt
         cp -Rf "${GITHUB_WORKSPACE}/build/Autoupdate"/*.sh "${PATH1}"
         chmod -R +x "${PATH1}"
+        source "${PATH1}/common.sh" && Diy_settings
+        rm -rf {build,README.md}
         if [[ "${{ github.event.inputs.ssh }}" == 'ssh' ]]; then
           echo "SSHYC=true" >> $GITHUB_ENV
         fi
-
+    
     - name: 加载源,patch补丁和自定义设置
       run: |
         cd openwrt
+        /bin/bash "${PATH1}/$DIY_P1_SH"
         ./scripts/feeds clean
         ./scripts/feeds update -a && ./scripts/feeds install -a
-        /bin/bash "${PATH1}/$DIY_P1_SH"
-        /bin/bash "${PATH1}/$DIY_P2_SH"
+        if [[ "${REPO_URL}" == "${LEDE}" ]]; then
+          echo "NAME2=Lede" >> $GITHUB_ENV
+          echo "ZUOZHE=Lean's" >> $GITHUB_ENV
+        elif [[ "${REPO_URL}" == "${LIENOL}" ]]; then
+          echo "NAME2=Lienol" >> $GITHUB_ENV
+          echo "ZUOZHE=lienol's" >> $GITHUB_ENV
+        elif [[ "${REPO_URL}" == "${PROJECT}" ]]; then
+          echo "NAME2=immortalwrt" >> $GITHUB_ENV
+          echo "ZUOZHE=ctcgfw" >> $GITHUB_ENV
+        fi
         if [ -n "$(ls -A "${PATH1}/files" 2>/dev/null)" ]; then
           cp -Rf "${PATH1}/files" "${Home}" && chmod -R +x ${Home}/files
         fi
@@ -119,20 +143,9 @@ jobs:
         if [ -n "$(ls -A "${PATH1}/patches" 2>/dev/null)" ]; then
           find "${PATH1}/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 --forward --no-backup-if-mismatch"
         fi
-        if [[ "${REPO_URL}" == "${LEDE}" ]]; then
-          source "${PATH1}/common.sh" && Diy_lede2
-          echo "NAME2=Lede" >> $GITHUB_ENV
-          echo "ZUOZHE=Lean's" >> $GITHUB_ENV
-        elif [[ "${REPO_URL}" == "${LIENOL}" ]]; then
-          source "${PATH1}/common.sh" && Diy_lienol2
-          echo "NAME2=Lienol" >> $GITHUB_ENV
-          echo "ZUOZHE=lienol's" >> $GITHUB_ENV
-        elif [[ "${REPO_URL}" == "${PROJECT}" ]]; then
-          source "${PATH1}/common.sh" && Diy_immortalwrt2
-          echo "NAME2=immortalwrt" >> $GITHUB_ENV
-          echo "ZUOZHE=ctcgfw" >> $GITHUB_ENV
-        fi
+        /bin/bash "${PATH1}/$DIY_P2_SH"
         git clone https://github.com/281677160/luci-app-autoupdate package/luci-app-autoupdate
+        ./scripts/feeds install -a
         git clone https://github.com/openwrt-dev/po2lmo.git
         pushd po2lmo
         make && sudo make install
@@ -143,14 +156,6 @@ jobs:
           echo "Compile_Date_Minute=$(date +%H%M)" >> $GITHUB_WORKSPACE/Openwrt.info
           source "${PATH1}/upgrade.sh" && Diy_Part1
         fi
- 
-    - name: 编译信息
-      run: |
-        cd openwrt   
-        if [ "${REGULAR_UPDATE}" == "true" ]; then
-          mv "${PATH1}"/AutoUpdate.sh package/base-files/files/bin
-          source "${PATH1}/upgrade.sh" && Diy_Part2 
-        fi
     
     - name: SSH远程连接（若打开了此功能,在此转圈2分钟还展开不了,请看《SSH连接教程》）
       uses: 281677160/debugger-action@master
@@ -159,15 +164,21 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
     
+    - name: 自动更新信息
+      if: env.REGULAR_UPDATE == 'true'
+      run: |
+        cd openwrt
+        mv "${PATH1}"/AutoUpdate.sh package/base-files/files/bin
+        source "${PATH1}/upgrade.sh" && Diy_Part2
+
     - name: 下载软件包
       id: package
       run: |
         cd openwrt
-        make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-        
+
     - name: 开始编译固件
       id: compile
       run: |
@@ -176,7 +187,7 @@ jobs:
         make -j$(($(nproc)+1)) || make -j1 V=s
         echo "::set-output name=status::success"
         echo "date=$(date "+%y.%m.%d-%H%M")" >> $GITHUB_ENV
-        echo "date2=$(date "+%Y%m%d%")" >> $GITHUB_ENV
+        echo "date2=$(date "+%Y%m%d%H%M%S")" >> $GITHUB_ENV
         DEVICE="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
         SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
         if [ "${DEVICE}" == "x86" ]; then
@@ -187,12 +198,12 @@ jobs:
          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > NAME1
          [ -s NAME1 ] && echo "NAME1=$(cat NAME1)" >> $GITHUB_ENV
         fi
-        
+
     - name: 上传bin文件夹(固件+ipk)在github actions
       uses: actions/upload-artifact@v2
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: OpenWrt_bin_${{ env.NAME2 }}_${{ env.NAME1 }}_${{ env.date }}
+        name: Bin_filename+ipk_${{ env.NAME2 }}_${{ env.NAME1 }}_${{ env.date }}
         path: openwrt/bin
 
     - name: 编译N1机型时,打包（N1、微加云、贝壳云、我家云、S9xxx）固件
@@ -272,7 +283,7 @@ jobs:
     - name: 整理发布信息
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
       run: |
-        echo "### 发布于$(date +"%Y年%m月%d号-%H点%M分")" > update_log.txt
+        echo "### (#${{github.run_number}})$(date +"%Y年%m月%d号-%H点%M分")" > update_log.txt
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
         echo "##### 奶牛快传：$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> update_log.txt
@@ -284,14 +295,15 @@ jobs:
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
       with:
         name: ${{ env.NAME2 }}-${{ env.NAME1 }}
-        tag: ${{ env.NAME1 }}
+        tag: ${{ env.NAME2 }}
         token: ${{ secrets.REPO_TOKEN }}
         bodyFile: "update_log.txt"
         artifacts: "${{ env.FIRMWARE }}/*"
     
-    - name: 电报机器人信息通知
-      run: |
-          if [[ "${SERVERCHAN_SCKEY}" == "true" ]]; then
-            curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=我亲爱的✨主人✨：
-                    您使用【${{github.repository}}】仓库的【${{matrix.target}}】文件夹编译的[${{ env.NAME2 }}-${{ env.NAME1 }}]固件(#${{github.run_number}})顺利编译完成了！💐" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
-          fi
+    - name: 微信通知
+      uses: emon100/Action-Serverchan@v2
+      if: steps.organizer.outputs.status == 'success' && env.SERVERCHAN_SCKEY == 'true'
+      with:
+        SCKEY: ${{ secrets.SCKEY }}
+        text: 恭喜主人${{ env.NAME2 }}_${{ env.NAME1 }}固件编译成功！
+        desp: 我亲爱的主人您使用${{matrix.target}}文件夹编译的[ ${{ env.NAME2 }}-${{ env.NAME1 }} ]固件(#${{github.run_number}})顺利编译完成了！
