@@ -93,7 +93,7 @@ jobs:
         echo "PATH1=${GITHUB_WORKSPACE}/openwrt/build/${{matrix.target}}" >> $GITHUB_ENV
         echo "artifact=${GITHUB_WORKSPACE}/openwrt/bin/Firmware" >> $GITHUB_ENV
     
-    - name: 调整脚本文件
+    - name: 加载脚本
       run: |
         git clone https://github.com/dhxh/OpenwrtAutoupdate "${GITHUB_WORKSPACE}/build/Autoupdate"
         cp -Rf `find ./ -maxdepth 1 -type d ! -path './openwrt' ! -path './'` openwrt
@@ -119,6 +119,19 @@ jobs:
         if [ -n "$(ls -A "${PATH1}/patches" 2>/dev/null)" ]; then
           find "${PATH1}/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 --forward --no-backup-if-mismatch"
         fi
+        if [[ "${REPO_URL}" == "${LEDE}" ]]; then
+          source "${PATH1}/common.sh" && Diy_lede2
+          echo "NAME2=Lede" >> $GITHUB_ENV
+          echo "ZUOZHE=Lean's" >> $GITHUB_ENV
+        elif [[ "${REPO_URL}" == "${LIENOL}" ]]; then
+          source "${PATH1}/common.sh" && Diy_lienol2
+          echo "NAME2=Lienol" >> $GITHUB_ENV
+          echo "ZUOZHE=lienol's" >> $GITHUB_ENV
+        elif [[ "${REPO_URL}" == "${PROJECT}" ]]; then
+          source "${PATH1}/common.sh" && Diy_immortalwrt2
+          echo "NAME2=immortalwrt" >> $GITHUB_ENV
+          echo "ZUOZHE=ctcgfw" >> $GITHUB_ENV
+        fi
         git clone https://github.com/281677160/luci-app-autoupdate package/luci-app-autoupdate
         git clone https://github.com/openwrt-dev/po2lmo.git
         pushd po2lmo
@@ -131,7 +144,7 @@ jobs:
           source "${PATH1}/upgrade.sh" && Diy_Part1
         fi
  
-    - name: 为编译作最后整理
+    - name: 编译信息
       run: |
         cd openwrt   
         if [ "${REGULAR_UPDATE}" == "true" ]; then
@@ -144,11 +157,6 @@ jobs:
       env:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-    
-    - name: 编译信息
-      run: |
-        cd openwrt
-        source "${PATH1}/upgrade.sh" && Diy_Part2
     
     - name: 下载软件包
       id: package
@@ -256,7 +264,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
       with:
-        name: 定时升级云端地址
+        name: ${{ env.date2 }}
         tag_name: ${{ env.date2 }}
         files: ${{ env.artifact }}/*
     
@@ -275,7 +283,7 @@ jobs:
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
       with:
         name: ${{ env.NAME2 }}-${{ env.NAME1 }}
-        tag: update_Firmware
+        tag: ${{ env.NAME1 }}
         token: ${{ secrets.REPO_TOKEN }}
         bodyFile: "update_log.txt"
         artifacts: "${{ env.FIRMWARE }}/*"
