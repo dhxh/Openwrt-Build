@@ -170,7 +170,7 @@ jobs:
         cd openwrt
         mv "${PATH1}"/AutoUpdate.sh package/base-files/files/bin
         source "${PATH1}/upgrade.sh" && Diy_Part2
-
+        
     - name: 下载软件包
       id: package
       run: |
