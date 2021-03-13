@@ -166,16 +166,6 @@ jobs:
       run: |
         cd openwrt
         make defconfig
-        DEVICE="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
-        SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
-        TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config)"
-        if [ "${DEVICE}" == "x86" ]; then
-           echo "NAME1=x86-${SUBTARGET}" >> $GITHUB_ENV
-        elif [[ ${{matrix.target}} =~ (Lede_phicomm_n1|Project_phicomm_n1) ]]; then
-           echo "NAME1=N1,Vplus,Beikeyun,L1Pro,S9xxx" >> $GITHUB_ENV
-        else
-           echo "NAME1=${TARGET_PROFILE}" >> $GITHUB_ENV
-        fi
         if [ "${REGULAR_UPDATE}" == "true" ]; then
           mv "${PATH1}"/AutoUpdate.sh package/base-files/files/bin
           source "${PATH1}/upgrade.sh" && Diy_Part2
