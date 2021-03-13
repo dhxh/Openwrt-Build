@@ -172,7 +172,6 @@ jobs:
         source "${PATH1}/upgrade.sh" && Diy_Part2
         
     - name: 下载软件包
-      id: package
       run: |
         cd openwrt
         make download -j8
