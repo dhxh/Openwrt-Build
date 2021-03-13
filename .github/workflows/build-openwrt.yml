@@ -166,8 +166,18 @@ jobs:
       run: |
         cd openwrt
         make defconfig
-        mv "${PATH1}"/AutoUpdate.sh package/base-files/files/bin
+        DEVICE="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
+        SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
+        TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config)"
+        if [ "${DEVICE}" == "x86" ]; then
+           echo "NAME1=x86-${SUBTARGET}" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} =~ (Lede_phicomm_n1|Project_phicomm_n1) ]]; then
+           echo "NAME1=N1,Vplus,Beikeyun,L1Pro,S9xxx" >> $GITHUB_ENV
+        else
+           echo "NAME1=${TARGET_PROFILE}" >> $GITHUB_ENV
+        fi
         if [ "${REGULAR_UPDATE}" == "true" ]; then
+          mv "${PATH1}"/AutoUpdate.sh package/base-files/files/bin
           source "${PATH1}/upgrade.sh" && Diy_Part2
         fi
     
@@ -188,16 +198,6 @@ jobs:
         echo "::set-output name=status::success"
         echo "date=$(date "+%y.%m.%d-%H%M")" >> $GITHUB_ENV
         echo "date2=$(date "+%Y%m%d")" >> $GITHUB_ENV
-        DEVICE="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
-        SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
-        if [ "${DEVICE}" == "x86" ]; then
-         echo "NAME1=x86-${SUBTARGET}" >> $GITHUB_ENV
-        elif [[ ${{matrix.target}} =~ (Lede_phicomm_n1|Project_phicomm_n1) ]]; then
-         echo "NAME1=N1,Vplus,Beikeyun,L1Pro,S9xxx" >> $GITHUB_ENV
-        else
-         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > NAME1
-         [ -s NAME1 ] && echo "NAME1=$(cat NAME1)" >> $GITHUB_ENV
-        fi
 
     - name: 上传bin文件夹(固件+ipk)在github actions
       uses: actions/upload-artifact@v2
