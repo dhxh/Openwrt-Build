@@ -147,11 +147,11 @@ jobs:
         source "${PATH1}/upgrade.sh" && Diy_Part1
     
     - name: SSH 远程连接
-      uses: P3TERX/ssh2actions@v1.0.0
+      uses: tete1030/safe-debugger-action@master
       if: env.SSH_ACTIONS == 'true' || (github.event.inputs.ssh == 'ssh' && github.event.inputs.ssh  != 'false')
       env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TMATE_ENCRYPT_PASSWORD: ${{secrets.TMATE_ENCRYPT_PASSWORD}}
+        SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
     
     - name: 为编译做最后处理
       run: |
