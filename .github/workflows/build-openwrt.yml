@@ -147,7 +147,7 @@ jobs:
         source "${PATH1}/upgrade.sh" && Diy_Part1
     
     - name: SSH 远程连接
-      uses: tete1030/safe-debugger-action@master
+      uses: garypang13/debugger-action@master
       if: env.SSH_ACTIONS == 'true' || (github.event.inputs.ssh == 'ssh' && github.event.inputs.ssh  != 'false')
       env:
         TMATE_ENCRYPT_PASSWORD: ${{secrets.TMATE_ENCRYPT_PASSWORD}}
