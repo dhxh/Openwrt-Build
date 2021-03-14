@@ -171,11 +171,11 @@ jobs:
         fi
         BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
         PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
-        if [[ "${BOARD}-x64" == "x86-64" ]];then
-		        echo "NAME1=x86-x64" >> $GITHUB_ENV
-	      else
-		        echo "NAME1=${PROFILE}" >> $GITHUB_ENV
-	      fi
+        if [ "${DEVICE}" == "x86" ]; then
+           echo ""${BOARD}-x64" == "x86-64" >> $GITHUB_ENV
+        else
+           echo "NAME1=${PROFILE}" >> $GITHUB_ENV
+        fi
 
     - name: 下载软件包
       id: package
