@@ -137,16 +137,9 @@ jobs:
         BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
         PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
         if [ "${BOARD}-x64" == "x86-x64" ]; then
-           echo "NAME1 = x86-x64" >> $GITHUB_ENV
+           echo "NAME1=x86-x64" >> $GITHUB_ENV
         else
-           echo "NAME1 = ${PROFILE}" >> $GITHUB_ENV
-        fi
-        if [[ "${REPO_URL}" == "${LEDE}" ]]; then
-           echo "NAME2=Lede" >> $GITHUB_ENV
-        elif [[ "${REPO_URL}" == "${LIENOL}" ]]; then
-           echo "NAME2=Lienol" >> $GITHUB_ENV
-        elif [[ "${REPO_URL}" == "${PROJECT}" ]]; then
-           echo "NAME2=Project" >> $GITHUB_ENV
+           echo "NAME1=${PROFILE}" >> $GITHUB_ENV
         fi
 
     - name: 下载软件包
@@ -164,8 +157,9 @@ jobs:
         echo -e "$(($(nproc)+1)) thread compile"
         make -j$(($(nproc)+1)) || make -j1 V=s
         echo "::set-output name=status::success"
-        echo "date=$(date "+%y.%m.%d-%H%M")" >> $GITHUB_ENV
+        echo "date1=$(date "+%Y年%m月%d号-%H点%M分")" >> $GITHUB_ENV
         echo "date2=$(date "+%Y%m%d")" >> $GITHUB_ENV
+        echo "update=$(date "+%Y%m%d-%H%M")" >> $GITHUB_ENV
 
     - name: 上传bin文件夹(固件+ipk)在github actions
       uses: actions/upload-artifact@v2
@@ -200,14 +194,14 @@ jobs:
       uses: actions/upload-artifact@v2
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
       with:
-        name: .config_${{ env.NAME2 }}_${{ env.NAME1 }}_${{ env.date }}
+        name: .config_${{ env.NAME2 }}_${{ env.NAME1 }}_${{ env.update }}
         path: openwrt/bin/config
 
     - name: 上传固件在github actions
       uses: actions/upload-artifact@v2
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
       with:
-        name: OpenWrt-${{ env.NAME2 }}-${{ env.NAME1 }}-firmware-${{ env.date }}
+        name: OpenWrt-${{ env.NAME2 }}-${{ env.NAME1 }}-firmware-${{ env.update }}
         path: ${{ env.FIRMWARE }}
 
     - name: 上传固件在gitHub releases
@@ -216,6 +210,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
       with:
-        name: ${{ env.date2 }}
+        name: ${{ env.date1 }}
         tag_name: ${{ env.date2 }}
         files: ${{ env.artifact }}/*
