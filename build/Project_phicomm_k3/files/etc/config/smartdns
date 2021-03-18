@@ -1,0 +1,127 @@
+
+config smartdns
+	option dualstack_ip_selection '1'
+	option prefetch_domain '1'
+	option serve_expired '1'
+	option seconddns_no_speed_check '0'
+	option coredump '0'
+	option port '6053'
+	option redirect 'dnsmasq-upstream'
+	option seconddns_enabled '1'
+	option seconddns_no_rule_addr '0'
+	option seconddns_no_rule_nameserver '0'
+	option seconddns_no_rule_ipset '0'
+	option seconddns_no_rule_soa '0'
+	option cache_size '20000'
+	option rr_ttl '3600'
+	option rr_ttl_min '5'
+	option server_name 'cn'
+	option tcp_server '1'
+	option ipv6_server '1'
+	option seconddns_port '7053'
+	option seconddns_tcp_server '1'
+	option seconddns_server_group 'gfw'
+	option seconddns_no_dualstack_selection '1'
+	option seconddns_no_cache '1'
+	option force_aaaa_soa '1'
+	option enabled '1'
+	list old_redirect 'dnsmasq-upstream'
+	list old_port '6053'
+	list old_enabled '1'
+
+config server
+	option enabled '1'
+	option name 'AliDNS'
+	option ip 'https://dns.alidns.com/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'cn'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option name 'DNSPod'
+	option ip 'https://doh.pub/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'cn'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option name 'Google '
+	option ip 'https://dns.google/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'gfw'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option name 'Cloudflare'
+	option ip 'https://cloudflare-dns.com/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'gfw'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option name 'Quad9'
+	option ip 'https://dns11.quad9.net/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'gfw'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option type 'udp'
+	option name 'AliDNS'
+	option ip '2400:3200::1'
+	option server_group 'cn'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option type 'udp'
+	option name 'AliDNS'
+	option ip '2400:3200:baba::1'
+	option server_group 'cn'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option type 'udp'
+	option name 'TUNA'
+	option ip '2001:da8::666'
+	option server_group 'cn'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option name 'Google '
+	option ip 'https://[2001:4860:4860::64]/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'gfw'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option name 'Google '
+	option ip 'https://[2001:4860:4860::6464]/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'gfw'
+	option blacklist_ip '0'
+
+config server
+	option enabled '1'
+	option name 'Cloudflare'
+	option ip 'https://[2606:4700:4700::1001]/dns-query'
+	option type 'https'
+	option no_check_certificate '0'
+	option server_group 'gfw'
+	option blacklist_ip '0'
+
