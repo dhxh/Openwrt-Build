@@ -148,7 +148,12 @@ jobs:
         elif [[ "${REPO_URL}" == "${PROJECT}" ]]; then
            echo "NAME2=Project" >> $GITHUB_ENV
         fi
-
+        
+    - name: 编译信息
+      run: |
+        cd openwrt
+        /bin/bash "${PATH1}/build_info.sh"
+   
     - name: 下载软件包
       id: package
       run: |
