@@ -1,10 +1,3 @@
-#
-#
-# 感谢p3terx大神的一键编译脚本
-# 
-# Copyright (C) 2019 P3TERX <https://p3terx.com>
-# <https://github.com/P3TERX/Actions-OpenWrt.git>
-#
 name: Build OpenWrt
 on:
   workflow_dispatch:
@@ -14,18 +7,14 @@ on:
         required: false
         default: 'ssh-actions'
 
-#定时触发开始编译(把下面两个#去掉开启,时间设置请看定时编译说明)
-#  schedule:
-#    - cron: 0 8 */5 * *
-
 env:
   LEDE: https://github.com/coolsnowwolf/lede
   LIENOL: https://github.com/Lienol/openwrt
-  PROJECT: https://github.com/immortalwrt/immortalwrt
-  GITURL: https://github.com/${{github.repository}}
-  Author: ${{github.actor}}
-  Run_number: ${{github.run_number}}
-  Run_workflow: ${{github.workflow}}
+  CTCFG: https://github.com/immortalwrt/immortalwrt
+  GITURL: https://github.com/${github.repository}
+  Author: ${github.actor}
+  Run_number: ${github.run_number}
+  Run_workflow: ${github.workflow}
   TZ: Asia/Shanghai
 
 jobs:
@@ -33,11 +22,11 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event.repository.owner.id == github.event.sender.id
 
-    name: 编译 "${{matrix.target}}"
+    name: 编译 "${matrix.target}"
     strategy:
       fail-fast: false
       matrix:
-        target: [Project_phicomm_k3]
+        target: [CTCFG_k3]
 
     steps:
     - name: 准备结束
@@ -95,11 +84,11 @@ jobs:
         ./scripts/feeds clean
         ./scripts/feeds update -a && ./scripts/feeds install -a
         if [[ "${REPO_URL}" == "${LEDE}" ]]; then
-          echo "NAME2=Lede" >> $GITHUB_ENV
+          echo "NAME1=Lede" >> $GITHUB_ENV
         elif [[ "${REPO_URL}" == "${LIENOL}" ]]; then
-          echo "NAME2=Lienol" >> $GITHUB_ENV
+          echo "NAME1=Lienol" >> $GITHUB_ENV
         elif [[ "${REPO_URL}" == "${PROJECT}" ]]; then
-          echo "NAME2=immortalwrt" >> $GITHUB_ENV
+          echo "NAME1=immortalwrt" >> $GITHUB_ENV
         fi
         if [ -n "$(ls -A "${PATH1}/files" 2>/dev/null)" ]; then
           cp -Rf "${PATH1}/files" "${Home}" && chmod -R +x ${Home}/files
@@ -137,9 +126,9 @@ jobs:
         BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
         PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
         if [ "${BOARD}-x64" == "x86-x64" ]; then
-           echo "NAME1=x86-x64" >> $GITHUB_ENV
+           echo "NAME2=x86-x64" >> $GITHUB_ENV
         else
-           echo "NAME1=${PROFILE}" >> $GITHUB_ENV
+           echo "NAME2=${PROFILE}" >> $GITHUB_ENV
         fi
 
     - name: 下载软件包
@@ -161,11 +150,11 @@ jobs:
         echo "date2=$(date "+%Y%m%d")" >> $GITHUB_ENV
         echo "update=$(date "+%Y%m%d-%H%M")" >> $GITHUB_ENV
 
-    - name: 上传bin文件夹(固件+ipk)在github actions
+    - name: 上传bin目录到github actions
       uses: actions/upload-artifact@v2
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: Bin_filename+ipk_${{ env.NAME2 }}_${{ env.NAME1 }}_${{ env.date }}
+        name: Bin_filename+ipk_${{ env.NAME1 }}_${{ env.NAME2 }}_${{ env.update }}
         path: openwrt/bin
     
     - name: 整理固件文件夹
@@ -194,15 +183,15 @@ jobs:
       uses: actions/upload-artifact@v2
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
       with:
-        name: .config_${{ env.NAME2 }}_${{ env.NAME1 }}_${{ env.update }}
+        name: config_${{ env.NAME1 }}_${{ env.NAME2 }}_${{ env.update }}
         path: openwrt/bin/config
 
     - name: 上传固件在github actions
       uses: actions/upload-artifact@v2
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
       with:
-        name: OpenWrt-${{ env.NAME2 }}-${{ env.NAME1 }}-firmware-${{ env.update }}
-        path: ${{ env.FIRMWARE }}
+        name: firmware-${{ env.NAME1 }}-${{ env.NAME2 }}-${{ env.update }}
+        path: ${{ env.artifact }}
 
     - name: 上传固件在gitHub releases
       uses: softprops/action-gh-release@v1
@@ -213,3 +202,18 @@ jobs:
         name: ${{ env.date1 }}
         tag_name: ${{ env.date2 }}
         files: ${{ env.artifact }}/*
+
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 1
+        keep_minimum_runs: 4
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@v0.1.0
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 3
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
