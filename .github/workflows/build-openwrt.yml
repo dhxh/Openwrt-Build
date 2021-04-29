@@ -11,10 +11,10 @@ env:
   LEDE: https://github.com/coolsnowwolf/lede
   LIENOL: https://github.com/Lienol/openwrt
   CTCFG: https://github.com/immortalwrt/immortalwrt
-  GITURL: https://github.com/${github.repository}
-  Author: ${github.actor}
-  Run_number: ${github.run_number}
-  Run_workflow: ${github.workflow}
+  GITURL: https://github.com/${github.repository}}
+  Author: ${{github.actor}}
+  Run_number: ${{github.run_number}}
+  Run_workflow: ${{github.workflow}}
   TZ: Asia/Shanghai
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event.repository.owner.id == github.event.sender.id
 
-    name: 编译 "${matrix.target}"
+    name: 编译 "${{matrix.target}}"
     strategy:
       fail-fast: false
       matrix:
