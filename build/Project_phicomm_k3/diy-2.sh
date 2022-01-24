@@ -16,3 +16,7 @@ sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/M
 
 # 编译K3的时候会出很多其他牌子路由器固件的，这个代码使用之后只出K3固件
 sed -i 's|^TARGET_|# TARGET_|g; s|# TARGET_DEVICES += phicomm_k3|TARGET_DEVICES += phicomm_k3|' target/linux/bcm53xx/image/Makefile
+
+#修复k3屏幕
+mv "${PATH1}"/k3screenctrl/000-k3screen.patch feeds/packages/utils/phicomm-k3screenctrl/patches/000-k3screen.patch
+mv "${PATH1}"/k3screenctrl/906-BCM5301x-uart1.patch target/linux/bcm53xx/patches-5.4/906-BCM5301x-uart1.patch
