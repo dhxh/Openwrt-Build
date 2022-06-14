@@ -6,7 +6,6 @@ config smartdns
 	option seconddns_no_dualstack_selection '0'
 	option coredump '0'
 	option port '6053'
-	option redirect 'dnsmasq-upstream'
 	option seconddns_enabled '1'
 	option seconddns_no_rule_addr '0'
 	option seconddns_no_rule_nameserver '0'
@@ -25,7 +24,8 @@ config smartdns
 	option rr_ttl_max '1800'
 	option force_aaaa_soa '1'
 	option enabled '1'
-	list old_redirect 'dnsmasq-upstream'
+	option redirect 'none'
+	list old_redirect 'none'
 	list old_port '6053'
 	list old_enabled '1'
 
