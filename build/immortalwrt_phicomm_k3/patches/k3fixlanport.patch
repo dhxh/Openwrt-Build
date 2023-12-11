@@ -1,0 +1,16 @@
+--- openwrt/target/linux/bcm53xx/patches-5.15/304-ARM-dts-BCM5301X-Specify-switch-ports-for-remaining-.patch  
++++ openwrt/target/linux/bcm53xx/patches-5.15/304-ARM-dts-BCM5301X-Specify-switch-ports-for-remaining-.patch
+@@ -501,11 +501,11 @@ 
+ +	status = "okay";
+ +
+ +	ports {
+-+		port@0 {
+++		port@1 {
+ +			label = "lan1";
+ +		};
+ +
+-+		port@1 {
+++		port@0 {
+ +			label = "lan2";
+ +		};
+ +
