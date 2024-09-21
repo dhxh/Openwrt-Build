@@ -37,7 +37,7 @@ jobs:
 
     steps:
     - name: 准备结束
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     
     - name: 检测脚本设置
       run: |
@@ -158,7 +158,7 @@ jobs:
         echo "update=$(date "+%Y%m%d-%H%M")" >> $GITHUB_ENV
 
     - name: 上传bin目录到github actions
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
         name: Bin_filename+ipk_${{ env.NAME1 }}_${{ env.NAME2 }}_${{ env.update }}
@@ -187,21 +187,21 @@ jobs:
         echo "::set-output name=status::success"
     
     - name: 上传.config配置文件在github actions
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
       with:
         name: config_${{ env.NAME1 }}_${{ env.NAME2 }}_${{ env.update }}
         path: openwrt/bin/config
 
     - name: 上传固件在github actions
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
       with:
         name: firmware-${{ env.NAME1 }}-${{ env.NAME2 }}-${{ env.update }}
         path: ${{ env.artifact }}
 
     - name: 上传固件在gitHub releases
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v4
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
